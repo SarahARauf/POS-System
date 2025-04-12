@@ -20,13 +20,14 @@ import java.awt.event.ActionListener;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseEvent;
 
+
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class SelfServicePOSUI {
 
     private JFrame frame;
-    private JTextArea productDisplayArea;
+    private JPanel productDisplayArea;
     private JTextArea cartDisplayArea;
     private JTextField totalAmountField;
     private JTextField quantityTextField;
@@ -61,21 +62,10 @@ public class SelfServicePOSUI {
         frame.setLayout(new BorderLayout());
 
         // Product display area
-        productDisplayArea = new JTextArea();
-        productDisplayArea.setEditable(false);
-        productDisplayArea.setEnabled(false);
+        productDisplayArea = new JPanel();
+        productDisplayArea.setLayout(new GridLayout(0,3,10,10));
         JScrollPane productScrollPane = new JScrollPane(productDisplayArea);
         frame.add(productScrollPane, BorderLayout.CENTER);
-
-        //Records the product clicked in UI from the cart
-        productDisplayArea.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseClicked(MouseEvent evt) {
-                selectedProductId = getSelectedProductId(productDisplayArea);
-                if (selectedProductId != null) {
-                    JOptionPane.showMessageDialog(frame, "Selected Product ID: " + selectedProductId, "Product Selected", JOptionPane.INFORMATION_MESSAGE);
-                }
-            }
-        });
 
         // Cart display area with fixed size
         cartDisplayArea = new JTextArea();
@@ -136,9 +126,30 @@ public class SelfServicePOSUI {
     public void displayProducts(List<Product> products) {
         StringBuilder productList = new StringBuilder("Available Products:\n");
         for (Product product : products) {
-            productList.append(product).append("\n");
+            JButton productButton = new JButton();
+            productButton.setLayout(new BorderLayout());
+            
+            //Set product image
+            Image image = new ImageIcon(this.getClass().getResource("MoleIMG.png")).getImage();
+            Image scaledImage = image.getScaledInstance(50, 50, java.awt.Image.SCALE_SMOOTH);
+            productButton.setIcon(new ImageIcon(scaledImage));
+                     
+            //Add product name and price as label below the img
+            JLabel productLabel = new JLabel("<html>"+product.getName()+"<br>$"+product.getPrice()+"</html>");
+            productLabel.setHorizontalAlignment(SwingConstants.CENTER);
+            productButton.add(productLabel, BorderLayout.SOUTH);
+            
+            //Store product ID in the button for selection handling
+            productButton.putClientProperty("productId", product.getProductId());
+            
+            // Add action listener to handle button clicks
+            productButton.addActionListener(e -> {
+                selectedProductId = (UUID) productButton.getClientProperty("productId");
+                JOptionPane.showMessageDialog(frame, "Selected Product ID: " + selectedProductId, "Product Selected", JOptionPane.INFORMATION_MESSAGE);
+            });
+            
+            productDisplayArea.add(productButton);
         }
-        productDisplayArea.setText(productList.toString());
     }
 
 //    // Display the current cart
