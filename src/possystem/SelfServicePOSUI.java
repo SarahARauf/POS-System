@@ -20,7 +20,6 @@ import java.awt.event.ActionListener;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseEvent;
 
-
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -28,7 +27,7 @@ public class SelfServicePOSUI {
 
     private JFrame frame;
     private JPanel productDisplayArea;
-    private JTextArea cartDisplayArea;
+    private JList<CartItem> cartDisplayArea;
     private JTextField totalAmountField;
     private JTextField quantityTextField;
     private JButton addToCartButton;
@@ -45,6 +44,26 @@ public class SelfServicePOSUI {
     Prompts payment
     Displays receipt
      */
+    protected class CartItem {
+
+        private String displayText; // Text to display in the UI
+        private UUID productId;     // The associated product ID
+
+        public CartItem(String displayText, UUID productId) {
+            this.displayText = displayText;
+            this.productId = productId;
+        }
+
+        public UUID getProductId() {
+            return productId;
+        }
+
+        @Override
+        public String toString() {
+            return displayText; // This is what will be shown in the JList
+        }
+    }
+
     public SelfServicePOSUI() {
         initializeUI();
     }
@@ -63,28 +82,28 @@ public class SelfServicePOSUI {
 
         // Product display area
         productDisplayArea = new JPanel();
-        productDisplayArea.setLayout(new GridLayout(0,3,10,10));
+        productDisplayArea.setLayout(new GridLayout(0, 3, 10, 10));
         JScrollPane productScrollPane = new JScrollPane(productDisplayArea);
         frame.add(productScrollPane, BorderLayout.CENTER);
 
         // Cart display area with fixed size
-        cartDisplayArea = new JTextArea();
-        cartDisplayArea.setEditable(false);
-        JScrollPane cartScrollPane = new JScrollPane(cartDisplayArea);
-
-        // Set a preferred size for the cart pane
-        cartScrollPane.setPreferredSize(new Dimension(200, frame.getHeight())); // Adjust the width as needed
-        frame.add(cartScrollPane, BorderLayout.EAST);
-
-        //Records the product clicked in UI from the cart
-        cartDisplayArea.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseClicked(MouseEvent evt) {
-                selectedProductId = getSelectedProductId(cartDisplayArea);
-                if (selectedProductId != null) {
+        cartDisplayArea = new JList<>();
+        cartDisplayArea.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        cartDisplayArea.addListSelectionListener(e -> {
+            if (!e.getValueIsAdjusting()) {
+                CartItem selectedItem = cartDisplayArea.getSelectedValue();
+                if (selectedItem != null) {
+                    selectedProductId = selectedItem.getProductId(); // Access the productId
                     JOptionPane.showMessageDialog(frame, "Selected Product ID: " + selectedProductId, "Cart Item Selected", JOptionPane.INFORMATION_MESSAGE);
                 }
             }
         });
+
+        JScrollPane cartScrollPane = new JScrollPane(cartDisplayArea);
+        // Set a preferred size for the cart pane
+        cartScrollPane.setPreferredSize(new Dimension(200, frame.getHeight())); // Adjust the width as needed
+        frame.add(cartScrollPane, BorderLayout.EAST);
+
 
         // Total amount field
         JPanel bottomPanel = new JPanel();
@@ -96,6 +115,7 @@ public class SelfServicePOSUI {
         // Remove from cart button -> Trigger removeItem(UUID productId, int quantity) in POSController
         removeFromCartButton = new JButton("Remove from Cart");
         bottomPanel.add(removeFromCartButton);
+        removeFromCartButton.addActionListener(new RemoveFromCartListener());
 
         // Will work alongside addToCartButton and removeFromCartButton to add/remove quantities from cart
         quantityTextField = new JTextField("Quantity", 10);
@@ -128,57 +148,42 @@ public class SelfServicePOSUI {
         for (Product product : products) {
             JButton productButton = new JButton();
             productButton.setLayout(new BorderLayout());
-            
+
             //Set product image
             Image image = new ImageIcon(this.getClass().getResource("MoleIMG.png")).getImage();
             Image scaledImage = image.getScaledInstance(50, 50, java.awt.Image.SCALE_SMOOTH);
             productButton.setIcon(new ImageIcon(scaledImage));
-                     
+
             //Add product name and price as label below the img
-            JLabel productLabel = new JLabel("<html>"+product.getName()+"<br>$"+product.getPrice()+"</html>");
+            JLabel productLabel = new JLabel("<html>" + product.getName() + "<br>$" + product.getPrice() + "</html>");
             productLabel.setHorizontalAlignment(SwingConstants.CENTER);
             productButton.add(productLabel, BorderLayout.SOUTH);
-            
+
             //Store product ID in the button for selection handling
             productButton.putClientProperty("productId", product.getProductId());
-            
+
             // Add action listener to handle button clicks
             productButton.addActionListener(e -> {
                 selectedProductId = (UUID) productButton.getClientProperty("productId");
+                controller.addItem(selectedProductId,1);
                 JOptionPane.showMessageDialog(frame, "Selected Product ID: " + selectedProductId, "Product Selected", JOptionPane.INFORMATION_MESSAGE);
             });
-            
+
             productDisplayArea.add(productButton);
         }
     }
 
-//    // Display the current cart
-//    public void showCart(List<SaleItem> cart) {
-//        StringBuilder cartList = new StringBuilder("Your Cart:\n");
-//        for (SaleItem item : cart) {
-//            cartList.append(item.getProduct().getName())
-//                    .append(" - $")
-//                    .append(item.getUnitPrice())
-//                    .append(" x ")
-//                    .append(item.getQuantity())
-//                    .append("\n");
-//        }
-//        cartDisplayArea.setText(cartList.toString());
-//
-//    }
+
     // Display the current cart called in POSController
     public void showCart(Sale sale) {
-        StringBuilder cartList = new StringBuilder("Your Cart:\n");
+        DefaultListModel<CartItem> cartListModel = new DefaultListModel<>();
         for (SaleItem item : sale.getItems()) {
-            cartList.append(item.getProduct().getName())
-                    .append(" - $")
-                    .append(item.getUnitPrice())
-                    .append(" x ")
-                    .append(item.getQuantity())
-                    .append("\n");
+            String displayText = item.getProduct().getName() + " - $" + item.getUnitPrice() + " x " + item.getQuantity();
+            CartItem cartItem = new CartItem(displayText, item.getProduct().getProductId()); // Store display text and productId
+            cartListModel.addElement(cartItem);
         }
         sale.calculateTotal();
-        cartDisplayArea.setText(cartList.toString());
+        cartDisplayArea.setModel(cartListModel);
         totalAmountField.setText("$" + sale.getTotalAmount().toString());
 
     }
@@ -246,33 +251,11 @@ public class SelfServicePOSUI {
         return frame;
     }
 
-//    public UUID getSelectedProductId(JTextArea textArea) {
-//        // Retrieve the selected text from the provided text area
-//        String selectedText = textArea.getSelectedText();
-//        if (selectedText != null) {
-//            try {
-//                // Extract and parse the UUID from the selected text
-//
-//                String regex = "[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}";
-//                Pattern pattern = Pattern.compile(regex);
-//                Matcher matcher = pattern.matcher(selectedText);
-//                //Chicken Breast (1kg) (ID: 88990011-2233-4455-6677-aabbccddeeff) - $6.00 | Stock: 15
-//                if (matcher.find()) {
-//          
-//                    return UUID.fromString(matcher.group(0));
-//                } else {
-//                    JOptionPane.showMessageDialog(frame, "No valid product ID found in the selection.", "Error", JOptionPane.ERROR_MESSAGE);
-//                }
-//            } catch (IllegalArgumentException ex) {
-//                JOptionPane.showMessageDialog(frame, "Invalid product selection.", "Error", JOptionPane.ERROR_MESSAGE);
-//            }
-//        }
-//        return null; // No valid selection
-//    }
-    public UUID getSelectedProductId(JTextArea textArea) {
+
+    public UUID getSelectedProductId(String selectedText) {
         // Retrieve the selected text from the provided text area
-        String selectedText = textArea.getSelectedText();
-        System.out.println(selectedText);
+//        String selectedText = textArea.getSelectedText();
+//        System.out.println(selectedText);
         if (selectedText != null) {
             try {
                 // Define the regex pattern to extract UUID
@@ -306,6 +289,7 @@ public class SelfServicePOSUI {
             try {
                 int quantity = Integer.parseInt(quantityTextField.getText());
                 controller.addItem(selectedProductId, quantity);
+                System.out.println(selectedProductId);
             } catch (NumberFormatException ex) {
                 JOptionPane.showMessageDialog(frame, "Invalid quantity", "Error", JOptionPane.ERROR_MESSAGE);
             }
@@ -318,8 +302,9 @@ public class SelfServicePOSUI {
         @Override
         public void actionPerformed(ActionEvent e) {
             try {
-                int quantity = Integer.parseInt(quantityTextField.getText());
-                controller.removeItem(selectedProductId, quantity);
+                System.out.println("RemoveFromCart Listener");
+                System.out.println(selectedProductId);
+                controller.removeItem(selectedProductId, 1);
             } catch (NumberFormatException ex) {
                 JOptionPane.showMessageDialog(frame, "Invalid quantity", "Error", JOptionPane.ERROR_MESSAGE);
             }

@@ -79,11 +79,14 @@ public class POSController {
 //                System.out.println("in the cart:"+cartItems.getProduct().getProductId());
 
                 if (cartItems.getProduct().getProductId().equals(product.getProductId())) {
-
-                    int quantityToAdd = cartItems.getQuantity() + quantity;
-                    cartItems.setQuantity(quantityToAdd);
-//                    System.out.println(cartItems.getProduct().getProductId());
-//                    System.out.println(cartItems.getQuantity());
+                    
+                    if (product.getStockQuantity()>cartItems.getQuantity()){
+                        int quantityToAdd = cartItems.getQuantity() + quantity;
+                        cartItems.setQuantity(quantityToAdd);
+                    }else{
+                        throw new IllegalArgumentException("Insufficient stock.");
+                        
+                    }
                 }
             }
         } else {
@@ -100,7 +103,9 @@ public class POSController {
 
     // Unfinished: Remove a product from cart (remove from Sale object)
     public void removeItem(UUID productId, int quantity) {
-        
+        System.out.println("in removeItem");
+        System.out.println(productId);
+
         if (productDAO.getProduct(productId) == null) {
             throw new IllegalArgumentException("Product not found.");
         }
@@ -113,7 +118,10 @@ public class POSController {
                 .map(Product::getProductId)
                 .collect(Collectors.toList());
         
+     
+        
         if (productInSale.contains(productId)) {
+            SaleItem itemToRemove = null;
             for (SaleItem cartItems : currentSale.getItems()){
                 if (cartItems.getProduct().getProductId().equals(productId)){
                     if (cartItems.getQuantity() < quantity){
@@ -121,13 +129,18 @@ public class POSController {
                     }else{
                         int quantityToSubtract = cartItems.getQuantity() - quantity;
                         if (quantityToSubtract == 0){
-                            currentSale.removeItem(cartItems);
+                            System.out.println("in Remove Item - quantitytosub = 0");
+                            itemToRemove = cartItems;
                         }else{
                             cartItems.setQuantity(quantityToSubtract);
                         }
                     }
 
                 }
+            }
+            if (itemToRemove != null)
+            {
+                currentSale.removeItem(itemToRemove);
             }
         }else{
             throw new IllegalArgumentException("Product not in cart");

@@ -66,11 +66,11 @@ public class POSSystem {
         
         posController.removeItem(productId, 1);
 
-        // Apply loyalty discount (if applicable)
-        UUID memberId = UUID.fromString("1a2b3c4d-5e6f-4a8b-9c0d-1e2f3a4b5c6d"); // Example loyalty member ID
-        posController.applyLoyaltyDiscount(memberId);
-
-        // Process payment
-        posController.processPayment();
+//        // Apply loyalty discount (if applicable)
+//        UUID memberId = UUID.fromString("1a2b3c4d-5e6f-4a8b-9c0d-1e2f3a4b5c6d"); // Example loyalty member ID
+//        posController.applyLoyaltyDiscount(memberId);
+//
+//        // Process payment
+//        posController.processPayment();
     }
 }

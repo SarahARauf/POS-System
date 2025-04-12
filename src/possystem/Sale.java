@@ -49,6 +49,7 @@ public class Sale {
     public void removeItem(SaleItem item) {
         items.remove(item);
         calculateTotal();
+        System.out.println("In removeItem (sale) - success");
     }
     
 
