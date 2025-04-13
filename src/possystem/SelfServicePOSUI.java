@@ -134,6 +134,7 @@ public class SelfServicePOSUI {
         //Trigger processPayment() in POSController
         checkoutButton = new JButton("Checkout");
         bottomPanel.add(checkoutButton);
+        checkoutButton.addActionListener(new CheckOutListener());
 
         frame.add(bottomPanel, BorderLayout.SOUTH);
 
@@ -308,6 +309,13 @@ public class SelfServicePOSUI {
             } catch (NumberFormatException ex) {
                 JOptionPane.showMessageDialog(frame, "Invalid quantity", "Error", JOptionPane.ERROR_MESSAGE);
             }
+        }
+    }
+    
+    private class CheckOutListener implements ActionListener {
+        @Override
+        public void actionPerformed(ActionEvent e){
+            controller.processPayment();
         }
     }
 
