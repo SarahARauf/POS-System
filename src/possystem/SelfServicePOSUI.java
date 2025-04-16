@@ -118,7 +118,7 @@ public class SelfServicePOSUI {
         removeFromCartButton.addActionListener(new RemoveFromCartListener());
 
         // Will work alongside addToCartButton and removeFromCartButton to add/remove quantities from cart
-        quantityTextField = new JTextField("Quantity", 10);
+        quantityTextField = new JTextField("Loyalty ID", 10);
         quantityTextField.setEditable(true);
         bottomPanel.add(quantityTextField);
 
@@ -172,6 +172,8 @@ public class SelfServicePOSUI {
 
             productDisplayArea.add(productButton);
         }
+        
+        
     }
 
 
@@ -186,6 +188,8 @@ public class SelfServicePOSUI {
         sale.calculateTotal();
         cartDisplayArea.setModel(cartListModel);
         totalAmountField.setText("$" + sale.getTotalAmount().toString());
+        
+
 
     }
 
@@ -193,10 +197,11 @@ public class SelfServicePOSUI {
     public PaymentDetails promptPayment() {
 
         //Popup panel for entering payment info
-        JPanel paymentPanel = new JPanel(new GridLayout(3, 2));
+        JPanel paymentPanel = new JPanel(new GridLayout(4, 2));
         JTextField cardNumberField = new JTextField();
         JTextField expiryDateField = new JTextField();
         JTextField cvvField = new JTextField();
+        JTextField loyaltyMemberField = new JTextField();
 
         paymentPanel.add(new JLabel("Card Number:"));
         paymentPanel.add(cardNumberField);
@@ -204,6 +209,9 @@ public class SelfServicePOSUI {
         paymentPanel.add(expiryDateField);
         paymentPanel.add(new JLabel("CVV:"));
         paymentPanel.add(cvvField);
+        paymentPanel.add(new JLabel("Loyalty Member No:"));
+        paymentPanel.add(loyaltyMemberField);
+        
 
         int result = JOptionPane.showConfirmDialog(
                 frame,
@@ -215,6 +223,12 @@ public class SelfServicePOSUI {
 
         //If user presses OK, then create a new PaymentDetail Object
         if (result == JOptionPane.OK_OPTION) {
+
+            if (!loyaltyMemberField.getText().isBlank()){
+                controller.applyLoyaltyDiscount(UUID.fromString(loyaltyMemberField.getText()));
+            }
+            cartDisplayArea.repaint();
+            cartDisplayArea.revalidate();
             return new PaymentDetails(
                     cardNumberField.getText(),
                     expiryDateField.getText(),

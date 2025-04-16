@@ -59,12 +59,12 @@ public class POSSystem {
 
         //All of the lines of codes at the bottom will be deleted, this is just for testing purposes
         // Add items to the cart
-        UUID productId = UUID.fromString("55667788-9900-1122-3344-aabbccddeeff"); // Example product ID
+        UUID productId = UUID.fromString("00112233-4455-6677-8899-aabbccddeeff"); // Example product ID
         posController.addItem(productId, 2);
         
         posController.addItem(productId, 2);
         
-        posController.removeItem(productId, 1);
+        posController.removeItem(productId, 3);
 
 //        // Apply loyalty discount (if applicable)
 //        UUID memberId = UUID.fromString("1a2b3c4d-5e6f-4a8b-9c0d-1e2f3a4b5c6d"); // Example loyalty member ID
