@@ -186,6 +186,8 @@ public class POSController {
             // Clear the current sale
             currentSale = null;
             loyaltyMember = null;
+            startNewSale();
+            ui.showCart(currentSale);
         } else {
             JOptionPane.showMessageDialog(ui.getFrame(), "Payment failed: " + result.getMessage(), "Payment Error", JOptionPane.ERROR_MESSAGE);
         }

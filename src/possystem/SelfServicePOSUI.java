@@ -227,8 +227,13 @@ public class SelfServicePOSUI {
             if (!loyaltyMemberField.getText().isBlank()){
                 controller.applyLoyaltyDiscount(UUID.fromString(loyaltyMemberField.getText()));
             }
-            cartDisplayArea.repaint();
-            cartDisplayArea.revalidate();
+            
+            //Clear cart after purchasing
+            
+//            cartDisplayArea.repaint();
+//            cartDisplayArea.revalidate();
+//            cartDisplayArea.
+            
             return new PaymentDetails(
                     cardNumberField.getText(),
                     expiryDateField.getText(),
@@ -266,7 +271,7 @@ public class SelfServicePOSUI {
         return frame;
     }
 
-
+    //Not being used
     public UUID getSelectedProductId(String selectedText) {
         // Retrieve the selected text from the provided text area
 //        String selectedText = textArea.getSelectedText();
