@@ -110,17 +110,17 @@ public class SelfServicePOSUI {
         bottomPanel.setLayout(new FlowLayout(FlowLayout.LEFT));
 
         // Add to cart button -> Trigger addItem(UUID productId, int quantity) in POSController
-        addToCartButton = new JButton("Add to Cart");
-        bottomPanel.add(addToCartButton);
+//        addToCartButton = new JButton("Add to Cart");
+//        bottomPanel.add(addToCartButton);
         // Remove from cart button -> Trigger removeItem(UUID productId, int quantity) in POSController
         removeFromCartButton = new JButton("Remove from Cart");
         bottomPanel.add(removeFromCartButton);
         removeFromCartButton.addActionListener(new RemoveFromCartListener());
 
-        // Will work alongside addToCartButton and removeFromCartButton to add/remove quantities from cart
-        quantityTextField = new JTextField("Loyalty ID", 10);
-        quantityTextField.setEditable(true);
-        bottomPanel.add(quantityTextField);
+//        // Will work alongside addToCartButton and removeFromCartButton to add/remove quantities from cart
+//        quantityTextField = new JTextField("Loyalty ID", 10);
+//        quantityTextField.setEditable(true);
+//        bottomPanel.add(quantityTextField);
 
         // Leave this here, will implement once I have figured out how to use computer vision for scanning
         scanItemButton = new JButton("Scan Item");
