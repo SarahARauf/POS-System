@@ -151,7 +151,8 @@ public class SelfServicePOSUI {
             productButton.setLayout(new BorderLayout());
 
             //Set product image
-            Image image = new ImageIcon(this.getClass().getResource("MoleIMG.png")).getImage();
+//            Image image = new ImageIcon(this.getClass().getResource("MoleIMG.png")).getImage();
+            Image image = new ImageIcon(product.getImgPath()).getImage();
             Image scaledImage = image.getScaledInstance(50, 50, java.awt.Image.SCALE_SMOOTH);
             productButton.setIcon(new ImageIcon(scaledImage));
 

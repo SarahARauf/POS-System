@@ -37,8 +37,8 @@ public class ProductDAO {
                 String name = rs.getString("name");
                 BigDecimal price = rs.getBigDecimal("price");
                 int stockQuantity = rs.getInt("stock_quantity");
-
-                products.add(new Product(productId, name, price, stockQuantity));
+                String imgPath = rs.getString("img_path");
+                products.add(new Product(productId, name, price, stockQuantity, imgPath));
             }
         } catch (SQLException e) {
             e.printStackTrace();
@@ -57,7 +57,8 @@ public class ProductDAO {
                     UUID.fromString(rs.getString("product_id")),
                     rs.getString("name"),
                     rs.getBigDecimal("price"),
-                    rs.getInt("stock_quantity")
+                    rs.getInt("stock_quantity"),
+                    rs.getString("img_path")
                 );
             }
         } catch (SQLException e) {

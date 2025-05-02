@@ -23,12 +23,14 @@ public class Product {
     private String name;
     private BigDecimal price;
     private int stockQuantity;
+    private String imgPath;
 
-    public Product(UUID productId, String name, BigDecimal price, int stockQuantity) {
+    public Product(UUID productId, String name, BigDecimal price, int stockQuantity, String imgPath) {
         this.productId = productId;
         this.name = name;
         this.price = price;
         this.stockQuantity = stockQuantity;
+        this.imgPath = imgPath;
     }
 
     // Getters
@@ -46,6 +48,10 @@ public class Product {
 
     public int getStockQuantity() {
         return stockQuantity;
+    }
+    
+    public String getImgPath(){
+        return imgPath;
     }
 
     // Business logic: Update stock quantity
