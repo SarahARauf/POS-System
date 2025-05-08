@@ -1,23 +1,48 @@
 from paddleocr import PaddleOCR, draw_ocr
+import argparse
+import re
 
-# Paddleocr supports Chinese, English, French, German, Korean and Japanese
-# You can set the parameter `lang` as `ch`, `en`, `french`, `german`, `korean`, `japan`
-# to switch the language model in order
-ocr = PaddleOCR(use_angle_cls=True, lang='en') # need to run only once to download and load model into memory
-img_path = 'C:\\Users\\Sarah\\Desktop\\Uni\\POS system\\POSSystem\\captured_frame.png'
-result = ocr.ocr(img_path, cls=True)
-for idx in range(len(result)):
-    res = result[idx]
-    for line in res:
-        print(line)
 
-# draw result
-from PIL import Image
-result = result[0]
-image = Image.open(img_path).convert('RGB')
-boxes = [line[0] for line in result]
-txts = [line[1][0] for line in result]
-scores = [line[1][1] for line in result]
-im_show = draw_ocr(image, boxes, txts, scores, font_path="C:\\Windows\\Fonts\\arial.ttf")
-im_show = Image.fromarray(im_show)
-im_show.save('result.jpg')
+def arg():
+    parser = argparse.ArgumentParser(description='PaddleOCR')
+    # model
+    parser.add_argument("--img_path", type=str, default='C:\\Users\\Sarah\\Desktop\\Uni\\POS system\\POSSystem\\captured_frame.png', help="Path to image")
+    args = parser.parse_args()
+    return args
+
+
+def ocr_run(img_path):
+    # Paddleocr supports Chinese, English, French, German, Korean and Japanese
+    # You can set the parameter `lang` as `ch`, `en`, `french`, `german`, `korean`, `japan`
+    # to switch the language model in order
+    ocr = PaddleOCR(use_angle_cls=True, lang='en') # need to run only once to download and load model into memory
+    # img_path = 'C:\\Users\\Sarah\\Desktop\\Uni\\POS system\\POSSystem\\captured_frame.png'
+    result = ocr.ocr(img_path, cls=True)
+    # print(result)
+    # print("---")
+
+    for idx in range(len(result)):
+        res = result[idx]
+        for line in res:
+            # print("-")
+            # print(line[1][0])
+            pattern_match = re.match(r'^\d{8}(-\d{4}){2}$', line[1][0])
+            if pattern_match:
+                return line[1][0]
+
+#^\d{8}(-\d{4}){2}$
+
+#^\d{8}(-\d{4}){3}-[a-z]{12}$
+
+
+def main():
+    args = arg()
+    code_pattern = ocr_run(args.img_path)
+    if code_pattern:
+        print(f"Code pattern found: {code_pattern}")
+    else:
+        print("No code pattern found.")
+
+if __name__ == '__main__':
+    main()
+
