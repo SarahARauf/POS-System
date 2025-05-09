@@ -14,8 +14,6 @@ import org.opencv.core.MatOfByte;
 import org.opencv.imgcodecs.Imgcodecs;
 import org.opencv.videoio.VideoCapture;
 
-
-
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 
@@ -112,31 +110,29 @@ public class OCRReader3 {
 //        performOCR();
     }
 
-    
-    private void performOCR() {
+    private String performOCR() {
 
         try {
 
             ProcessBuilder pb = new ProcessBuilder("cmd.exe", "/c", "src\\ocr\\run_ocr.bat");
-          
+
             pb.redirectErrorStream(true); // Merge standard error with output
 
             // Start the process
             Process process = pb.start();
-            
 
             // Capture the output
             BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
             String line;
-            
+
             String productIDRead = "Product ID not found";
             while ((line = reader.readLine()) != null) {
-                if (line.contains("Code pattern found:")){
+                if (line.contains("Code pattern found:")) {
                     productIDRead = line.replace("Code pattern found:", "").trim();
-                    
+
                 }
             }
-            
+
             System.out.println("Python Output: " + productIDRead);
 
             // Wait for the process to complete
@@ -146,10 +142,13 @@ public class OCRReader3 {
             } else {
                 System.err.println("Python script execution failed with exit code: " + exitCode);
             }
-            
+
+            return productIDRead;
         } catch (Exception e) {
-             e.printStackTrace();
-           
+            e.printStackTrace();
+
+            return "Error during OCR: " + e.getMessage();
+
         }
     }
 
