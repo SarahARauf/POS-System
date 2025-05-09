@@ -14,13 +14,10 @@ import org.opencv.core.MatOfByte;
 import org.opencv.imgcodecs.Imgcodecs;
 import org.opencv.videoio.VideoCapture;
 
-import net.sourceforge.tess4j.ITesseract;
-import net.sourceforge.tess4j.Tesseract;
-import net.sourceforge.tess4j.TesseractException;
+
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
-import java.io.File;
 
 import javax.swing.*;
 import java.awt.*;
@@ -40,17 +37,11 @@ public class OCRReader3 {
         System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
     }
 
-    private final ITesseract tesseract;
     private final ExecutorService executorService;
     private volatile boolean running = true;
     private Mat capturedFrame;
 
     public OCRReader3() {
-        // Initialize Tesseract
-        tesseract = new Tesseract();
-        tesseract.setDatapath("C:\\Tess4J"); // Adjust the path
-        tesseract.setLanguage("eng");
-
 
         // Thread pool for processing frames
         executorService = Executors.newSingleThreadExecutor();
@@ -110,7 +101,6 @@ public class OCRReader3 {
     private void processCapturedFrame(Mat mat) {
         BufferedImage image = matToBufferedImage(mat);
 
-        // Save the captured frame as an image (optional)
         File outputfile = new File("src\\ocr\\captured_frame.png");
         try {
             javax.imageio.ImageIO.write(image, "png", outputfile);
@@ -119,40 +109,12 @@ public class OCRReader3 {
             e.printStackTrace();
         }
 
-        // Perform OCR on the captured image
-//        executorService.submit(() -> performOCR(image));
-        performOCR();
+//        performOCR();
     }
 
-//    private void processCapturedFrame(Mat mat) {
-//        // Preprocess the image
-//        Mat grayMat = new Mat();
-//        org.opencv.imgproc.Imgproc.cvtColor(mat, grayMat, org.opencv.imgproc.Imgproc.COLOR_BGR2GRAY);
-//
-//        Mat binaryMat = new Mat();
-//        org.opencv.imgproc.Imgproc.threshold(grayMat, binaryMat, 0, 255, org.opencv.imgproc.Imgproc.THRESH_BINARY | org.opencv.imgproc.Imgproc.THRESH_OTSU);
-//
-//        // Convert preprocessed Mat to BufferedImage
-//        BufferedImage image = matToBufferedImage(binaryMat);
-//
-//        // Save preprocessed frame as an image (optional)
-//        File outputfile = new File("preprocessed_frame.png");
-//        try {
-//            javax.imageio.ImageIO.write(image, "png", outputfile);
-//            System.out.println("Preprocessed frame saved as: " + outputfile.getAbsolutePath());
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//        }
-//
-//        // Perform OCR on the preprocessed image
-//        executorService.submit(() -> performOCR(image));
-//    }
     
     private void performOCR() {
-        String pythonScriptPath = "src\\ocr\\ocr.py"; // Replace with the actual path to the Python script
-        String imagePath = "captured_frame.png";  // Replace with the path to the saved image
-        String condaEnvName = "paddle_ocr";
-        
+
         try {
 
             ProcessBuilder pb = new ProcessBuilder("cmd.exe", "/c", "src\\ocr\\run_ocr.bat");
@@ -167,15 +129,15 @@ public class OCRReader3 {
             BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
             String line;
             
-            String productID = "Product ID not found";
+            String productIDRead = "Product ID not found";
             while ((line = reader.readLine()) != null) {
                 if (line.contains("Code pattern found:")){
-                    productID = line.replace("Code pattern found:", "").trim();
+                    productIDRead = line.replace("Code pattern found:", "").trim();
                     
                 }
             }
             
-            System.out.println("Python Output: " + productID);
+            System.out.println("Python Output: " + productIDRead);
 
             // Wait for the process to complete
             int exitCode = process.waitFor();
@@ -187,19 +149,9 @@ public class OCRReader3 {
             
         } catch (Exception e) {
              e.printStackTrace();
-//            System.err.println("Error during OCR: " + e.getMessage());
            
         }
     }
-
-//    private void performOCR(BufferedImage image) {
-//        try {
-//            String text = tesseract.doOCR(image);
-//            System.out.println("Detected Text: " + text);
-//        } catch (TesseractException e) {
-//            System.err.println("Error during OCR: " + e.getMessage());
-//        }
-//    }
 
     private BufferedImage matToBufferedImage(Mat mat) {
         MatOfByte matOfByte = new MatOfByte();
