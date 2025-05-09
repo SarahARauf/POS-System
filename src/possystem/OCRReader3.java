@@ -151,25 +151,31 @@ public class OCRReader3 {
     private void performOCR() {
         String pythonScriptPath = "src\\ocr\\ocr.py"; // Replace with the actual path to the Python script
         String imagePath = "captured_frame.png";  // Replace with the path to the saved image
+        String condaEnvName = "paddle_ocr";
+        
         try {
-            // Build the Python command
-            ProcessBuilder pb = new ProcessBuilder(
-                "python", 
-                pythonScriptPath, 
-                "--img_path", 
-                imagePath
-            );
-            
+
+            ProcessBuilder pb = new ProcessBuilder("cmd.exe", "/c", "src\\ocr\\run_ocr.bat");
+          
+            pb.redirectErrorStream(true); // Merge standard error with output
+
             // Start the process
             Process process = pb.start();
+            
 
             // Capture the output
             BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
             String line;
+            
+            String productID = "Product ID not found";
             while ((line = reader.readLine()) != null) {
-                System.out.println("Python Output: " + line);
-                // You can add logic to handle the output as needed
+                if (line.contains("Code pattern found:")){
+                    productID = line.replace("Code pattern found:", "").trim();
+                    
+                }
             }
+            
+            System.out.println("Python Output: " + productID);
 
             // Wait for the process to complete
             int exitCode = process.waitFor();
