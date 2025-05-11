@@ -66,6 +66,7 @@ public class SelfServicePOSUI {
     }
 
     public SelfServicePOSUI() {
+        this.ocrReader = new OCRReader();
         initializeUI();
     }
 
@@ -166,7 +167,7 @@ public class SelfServicePOSUI {
             //Store product ID in the button for selection handling
             productButton.putClientProperty("productId", product.getProductId());
 
-            // Add action listener to handle button clicks
+            // Add action listener to handle button clicks (adding the items)
             productButton.addActionListener(e -> {
                 selectedProductId = (UUID) productButton.getClientProperty("productId");
                 controller.addItem(selectedProductId,1);
@@ -323,6 +324,10 @@ public class SelfServicePOSUI {
         @Override
         public void actionPerformed(ActionEvent e){
             try{
+                ocrReader.startScan();
+                UUID selectedProductId = ocrReader.performOCR();
+                controller.addItem(selectedProductId,1);
+                JOptionPane.showMessageDialog(frame, "Selected Product ID: " + selectedProductId, "Product Selected", JOptionPane.INFORMATION_MESSAGE);
                 
                 
             } catch(Exception ex) {
