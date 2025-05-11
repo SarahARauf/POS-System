@@ -4,46 +4,171 @@
  */
 package possystem;
 
-import org.opencv.core.Core;
-import org.opencv.core.Mat;
-import org.opencv.videoio.VideoCapture;
-import org.opencv.imgcodecs.Imgcodecs;
-
-
-import net.sourceforge.tess4j.ITesseract;
-import net.sourceforge.tess4j.Tesseract;
-import net.sourceforge.tess4j.TesseractException;
-
-import java.io.File;
 /**
  *
  * @author Sarah
  */
-public class OCRReader {
-    public static void main(String[] args) {
-        // Create a Tesseract instance
-        ITesseract tesseract = new Tesseract();
+import org.opencv.core.Core;
+import org.opencv.core.Mat;
+import org.opencv.core.MatOfByte;
+import org.opencv.imgcodecs.Imgcodecs;
+import org.opencv.videoio.VideoCapture;
 
-        // Set the path to tessdata folder
-        tesseract.setDatapath("C:\\Tess4J"); // Update path
-        tesseract.setLanguage("eng"); // Language for OCR (English)
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.InputStream;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.UUID;
+
+
+public class OCRReader {
+
+    static {
+        // Load the OpenCV native library
+        System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
+    }
+
+    private final ExecutorService executorService;
+    private volatile boolean running = true;
+    private Mat capturedFrame;
+
+    public OCRReader() {
+
+        // Thread pool for processing frames
+        executorService = Executors.newSingleThreadExecutor();
+    }
+
+    public void startScan() {
+        VideoCapture capture = new VideoCapture(0);
+        if (!capture.isOpened()) {
+            System.err.println("Cannot open camera");
+            return;
+        }
+
+        JFrame frame = new JFrame("Real-Time OCR");
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        JLabel label = new JLabel();
+        label.setHorizontalAlignment(SwingConstants.CENTER);
+        frame.add(label, BorderLayout.CENTER);
+        frame.setSize(800, 600);
+        frame.setVisible(true);
+
+        // Add a key listener for capture and exit functionality
+        frame.addKeyListener(new KeyAdapter() {
+            @Override
+            public void keyPressed(KeyEvent e) {
+                if (e.getKeyCode() == KeyEvent.VK_ESCAPE) {
+                    running = false;
+                } else if (e.getKeyCode() == KeyEvent.VK_C) { // Press 'C' to capture frame
+                    capturedFrame = new Mat();
+                    if (capture.read(capturedFrame)) {
+                        processCapturedFrame(capturedFrame);
+                    } else {
+                        System.err.println("Failed to capture frame.");
+                    }
+                }
+            }
+        });
+
+        Mat mat = new Mat();
+        while (running) {
+            if (!capture.read(mat)) {
+                System.err.println("Cannot read frame");
+                break;
+            }
+
+            // Convert the Mat frame to BufferedImage
+            BufferedImage image = matToBufferedImage(mat);
+
+            // Display the image
+            label.setIcon(new ImageIcon(image));
+        }
+
+        capture.release();
+        frame.dispose();
+        executorService.shutdown();
+    }
+
+    private void processCapturedFrame(Mat mat) {
+        BufferedImage image = matToBufferedImage(mat);
+
+        File outputfile = new File("src\\ocr\\captured_frame.png");
+        try {
+            javax.imageio.ImageIO.write(image, "png", outputfile);
+            System.out.println("Frame saved as: " + outputfile.getAbsolutePath());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+//        performOCR();
+    }
+
+    public UUID performOCR() {
 
         try {
-            // Provide an image file for OCR
-            File imageFile = new File("C:\\Tess4J\\tessdata\\sample.png"); // Replace with your image path
-            String text = tesseract.doOCR(imageFile);
 
-            // Display the extracted text
-            System.out.println("Extracted Text: ");
-            System.out.println(text);
-        } catch (TesseractException e) {
-            System.err.println("Error while performing OCR: " + e.getMessage());
+            ProcessBuilder pb = new ProcessBuilder("cmd.exe", "/c", "src\\ocr\\run_ocr.bat");
+
+            pb.redirectErrorStream(true); // Merge standard error with output
+
+            // Start the process
+            Process process = pb.start();
+
+            // Capture the output
+            BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+            String line;
+
+            String productIDRead = "Product ID not found";
+            while ((line = reader.readLine()) != null) {
+                if (line.contains("Code pattern found:")) {
+                    productIDRead = line.replace("Code pattern found:", "").trim();
+
+                }
+            }
+
+            System.out.println("Python Output: " + productIDRead);
+
+            // Wait for the process to complete
+            int exitCode = process.waitFor();
+            if (exitCode == 0) {
+                System.out.println("Python script executed successfully.");
+            } else {
+                System.err.println("Python script execution failed with exit code: " + exitCode);
+            }
+
+            return UUID.fromString(productIDRead);
+        } catch (Exception e) {
+            e.printStackTrace();
+
+//            return "Error during OCR: " + e.getMessage();
+            return UUID.fromString("00000000-0000-0000-0000-000000000000");
+
+
         }
     }
 
-    void setVisible(boolean b) {
-        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+    private BufferedImage matToBufferedImage(Mat mat) {
+        MatOfByte matOfByte = new MatOfByte();
+        Imgcodecs.imencode(".jpg", mat, matOfByte);
+        byte[] byteArray = matOfByte.toArray();
+        try (InputStream in = new ByteArrayInputStream(byteArray)) {
+            return javax.imageio.ImageIO.read(in);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
     }
-    
-    
+
+    public static void main(String[] args) {
+        new OCRReader().startScan();
+    }
 }

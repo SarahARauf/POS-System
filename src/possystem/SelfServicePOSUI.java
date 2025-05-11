@@ -36,6 +36,7 @@ public class SelfServicePOSUI {
     private JButton checkoutButton;
     private POSController controller;
     private UUID selectedProductId;
+    private OCRReader ocrReader;
 
     /* 
     Initializing the UI
@@ -125,7 +126,8 @@ public class SelfServicePOSUI {
         // Leave this here, will implement once I have figured out how to use computer vision for scanning
         scanItemButton = new JButton("Scan Item");
         bottomPanel.add(scanItemButton);
-
+        scanItemButton.addActionListener(new ScanItemListener());
+        
         bottomPanel.add(new JLabel("Total Amount:"));
         totalAmountField = new JTextField(10);
         totalAmountField.setEditable(false);
@@ -188,11 +190,10 @@ public class SelfServicePOSUI {
         }
         sale.calculateTotal();
         cartDisplayArea.setModel(cartListModel);
-        totalAmountField.setText("$" + sale.getTotalAmount().toString());
-        
-
-
+        totalAmountField.setText("$" + sale.getTotalAmount().toString()); 
     }
+    
+    
 
     // Prompt for payment information called in PosController
     public PaymentDetails promptPayment() {
@@ -272,49 +273,63 @@ public class SelfServicePOSUI {
         return frame;
     }
 
-    //Not being used
-    public UUID getSelectedProductId(String selectedText) {
-        // Retrieve the selected text from the provided text area
-//        String selectedText = textArea.getSelectedText();
-//        System.out.println(selectedText);
-        if (selectedText != null) {
-            try {
-                // Define the regex pattern to extract UUID
-                String regex = "[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}";
-                Pattern pattern = Pattern.compile(regex);
-                Matcher matcher = pattern.matcher(selectedText);
+//    //Not being used
+//    public UUID getSelectedProductId(String selectedText) {
+//        // Retrieve the selected text from the provided text area
+////        String selectedText = textArea.getSelectedText();
+////        System.out.println(selectedText);
+//        if (selectedText != null) {
+//            try {
+//                // Define the regex pattern to extract UUID
+//                String regex = "[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}";
+//                Pattern pattern = Pattern.compile(regex);
+//                Matcher matcher = pattern.matcher(selectedText);
+//
+//                // Check if a match is found
+//                if (matcher.find()) {
+//                    // Extract and return the UUID
+//                    return UUID.fromString(matcher.group(0));
+//                } else {
+//                    // Show an error message if no valid UUID is found
+//                    JOptionPane.showMessageDialog(null, "No valid product ID found in the selection.", "Error", JOptionPane.ERROR_MESSAGE);
+//                }
+//            } catch (IllegalArgumentException ex) {
+//                // Show an error message if the UUID format is invalid
+//                JOptionPane.showMessageDialog(null, "Invalid product selection.", "Error", JOptionPane.ERROR_MESSAGE);
+//            }
+//        } else {
+//            // Show an error message if no text is selected
+//            JOptionPane.showMessageDialog(null, "No text selected.", "Error", JOptionPane.ERROR_MESSAGE);
+//        }
+//        return null; // No valid selection
+//    }
 
-                // Check if a match is found
-                if (matcher.find()) {
-                    // Extract and return the UUID
-                    return UUID.fromString(matcher.group(0));
-                } else {
-                    // Show an error message if no valid UUID is found
-                    JOptionPane.showMessageDialog(null, "No valid product ID found in the selection.", "Error", JOptionPane.ERROR_MESSAGE);
-                }
-            } catch (IllegalArgumentException ex) {
-                // Show an error message if the UUID format is invalid
-                JOptionPane.showMessageDialog(null, "Invalid product selection.", "Error", JOptionPane.ERROR_MESSAGE);
-            }
-        } else {
-            // Show an error message if no text is selected
-            JOptionPane.showMessageDialog(null, "No text selected.", "Error", JOptionPane.ERROR_MESSAGE);
-        }
-        return null; // No valid selection
-    }
-
-    private class AddToCartListener implements ActionListener {
-
+//    private class AddToCartListener implements ActionListener {
+//
+//        @Override
+//        public void actionPerformed(ActionEvent e) {
+//            try {
+//                int quantity = Integer.parseInt(quantityTextField.getText());
+//                controller.addItem(selectedProductId, quantity);
+//                System.out.println(selectedProductId);
+//            } catch (NumberFormatException ex) {
+//                JOptionPane.showMessageDialog(frame, "Invalid quantity", "Error", JOptionPane.ERROR_MESSAGE);
+//            }
+//
+//        }
+//    }
+    
+    private class ScanItemListener implements ActionListener {
         @Override
-        public void actionPerformed(ActionEvent e) {
-            try {
-                int quantity = Integer.parseInt(quantityTextField.getText());
-                controller.addItem(selectedProductId, quantity);
-                System.out.println(selectedProductId);
-            } catch (NumberFormatException ex) {
-                JOptionPane.showMessageDialog(frame, "Invalid quantity", "Error", JOptionPane.ERROR_MESSAGE);
-            }
+        public void actionPerformed(ActionEvent e){
+            try{
+                
+                
+            } catch(Exception ex) {
+   
+                JOptionPane.showMessageDialog(frame, "Scanning Error", "Error", JOptionPane.ERROR_MESSAGE);
 
+            }
         }
     }
 
