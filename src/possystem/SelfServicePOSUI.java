@@ -333,8 +333,9 @@ public class SelfServicePOSUI {
                 ocrReader = new OCRReader2();
                 ocrReader.startScan();
 //                UUID selectedProductId = ocrReader.performOCR();
-                controller.addItem(selectedProductId,1);
-                JOptionPane.showMessageDialog(frame, "Selected Product ID: " + selectedProductId, "Product Selected", JOptionPane.INFORMATION_MESSAGE);
+// need to check to make sure selectedProductID is valid before adding:
+//                controller.addItem(selectedProductId,1);
+//                JOptionPane.showMessageDialog(frame, "Selected Product ID: " + selectedProductId, "Product Selected", JOptionPane.INFORMATION_MESSAGE);
                 
                 
             } catch(Exception ex) {

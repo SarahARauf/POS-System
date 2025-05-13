@@ -8,7 +8,6 @@ package possystem;
  *
  * @author Sarah
  */
-
 import org.opencv.core.Core;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfByte;
@@ -43,6 +42,8 @@ public class OCRReader2 {
         VideoCapture capture = new VideoCapture(0);
         if (!capture.isOpened()) {
             System.err.println("Cannot open camera");
+            JOptionPane.showMessageDialog(null, "Scanning Error: Unable to open the camera.", "Error", JOptionPane.ERROR_MESSAGE);
+
             return;
         }
 
@@ -53,6 +54,7 @@ public class OCRReader2 {
         frame.add(label, BorderLayout.CENTER);
         frame.setSize(800, 600);
         frame.setVisible(true);
+        frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 
         frame.addKeyListener(new KeyAdapter() {
             @Override
@@ -66,6 +68,16 @@ public class OCRReader2 {
                     } else {
                         System.err.println("Failed to capture frame.");
                     }
+                }
+            }
+        });
+
+        frame.addWindowListener(new java.awt.event.WindowAdapter() {
+            @Override
+            public void windowClosing(java.awt.event.WindowEvent e) {
+                running.set(false);
+                if (capture.isOpened()) {
+                    capture.release();
                 }
             }
         });
@@ -99,6 +111,7 @@ public class OCRReader2 {
             protected void done() {
                 capture.release();
                 frame.dispose();
+                running.set(false);
             }
         };
 
