@@ -15,7 +15,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.UUID;
-import java.awt.event.ActionEvent;
+import java.awt.event.ActionEvent;  
 import java.awt.event.ActionListener;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseEvent;
@@ -28,6 +28,7 @@ public class SelfServicePOSUI {
     private JFrame frame;
     private JPanel productDisplayArea;
     private JList<CartItem> cartDisplayArea;
+    private JPanel cameraPanel;
     private JTextField totalAmountField;
     private JTextField quantityTextField;
     private JButton addToCartButton;
@@ -36,7 +37,7 @@ public class SelfServicePOSUI {
     private JButton checkoutButton;
     private POSController controller;
     private UUID selectedProductId;
-    private OCRReader ocrReader;
+    private OCRReader2 ocrReader;
 
     /* 
     Initializing the UI
@@ -66,7 +67,6 @@ public class SelfServicePOSUI {
     }
 
     public SelfServicePOSUI() {
-        this.ocrReader = new OCRReader();
         initializeUI();
     }
 
@@ -81,6 +81,12 @@ public class SelfServicePOSUI {
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setSize(800, 600);
         frame.setLayout(new BorderLayout());
+        
+//        // Camera panel for OCRReader
+//        cameraPanel = new JPanel();
+//        cameraPanel.setPreferredSize(new Dimension(320, 240));
+//
+//        frame.add(cameraPanel, BorderLayout.WEST);
 
         // Product display area
         productDisplayArea = new JPanel();
@@ -324,8 +330,9 @@ public class SelfServicePOSUI {
         @Override
         public void actionPerformed(ActionEvent e){
             try{
+                ocrReader = new OCRReader2();
                 ocrReader.startScan();
-                UUID selectedProductId = ocrReader.performOCR();
+//                UUID selectedProductId = ocrReader.performOCR();
                 controller.addItem(selectedProductId,1);
                 JOptionPane.showMessageDialog(frame, "Selected Product ID: " + selectedProductId, "Product Selected", JOptionPane.INFORMATION_MESSAGE);
                 

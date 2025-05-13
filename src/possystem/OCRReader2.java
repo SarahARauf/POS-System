@@ -8,76 +8,127 @@ package possystem;
  *
  * @author Sarah
  */
+
 import org.opencv.core.Core;
 import org.opencv.core.Mat;
-import org.opencv.videoio.VideoCapture;
+import org.opencv.core.MatOfByte;
 import org.opencv.imgcodecs.Imgcodecs;
-
-import net.sourceforge.tess4j.ITesseract;
-import net.sourceforge.tess4j.Tesseract;
-import net.sourceforge.tess4j.TesseractException;
+import org.opencv.videoio.VideoCapture;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 import java.awt.image.BufferedImage;
-
-import org.opencv.core.Core;
-import org.opencv.core.Mat;
-import org.opencv.imgcodecs.Imgcodecs;
-import org.opencv.highgui.HighGui;
-import org.opencv.videoio.VideoCapture;
-
-import org.opencv.core.Core;
-import org.opencv.core.Mat;
-import org.opencv.highgui.HighGui;
-import org.opencv.videoio.VideoCapture;
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.InputStream;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class OCRReader2 {
-    public static void main(String[] args) {
-        // Load the OpenCV library
+
+    static {
+        // Load the OpenCV native library
         System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
+    }
 
-        // Check if OpenCV is properly loaded
-        System.out.println("OpenCV version: " + Core.VERSION);
+    private final AtomicBoolean running;
+    private Mat capturedFrame;
 
-        // Create a VideoCapture object to access the webcam
-        VideoCapture capture = new VideoCapture(0); // 0 for default camera
+    public OCRReader2() {
+        running = new AtomicBoolean(true); // Initialize to true
+    }
 
-        // Check if the camera opened successfully
+    public void startScan() {
+        VideoCapture capture = new VideoCapture(0);
         if (!capture.isOpened()) {
-            System.out.println("Error: Cannot open the camera!");
+            System.err.println("Cannot open camera");
             return;
         }
 
-        // Create a matrix to hold the frames
-        Mat frame = new Mat();
+        JFrame frame = new JFrame("Real-Time OCR");
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        JLabel label = new JLabel();
+        label.setHorizontalAlignment(SwingConstants.CENTER);
+        frame.add(label, BorderLayout.CENTER);
+        frame.setSize(800, 600);
+        frame.setVisible(true);
 
-        System.out.println("Press 'ESC' to exit...");
-
-        // Continuously capture and display frames
-        while (true) {
-            // Read the frame from the camera
-            if (capture.read(frame)) {
-                // Display the frame
-                HighGui.imshow("Camera Feed", frame);
-
-                // Exit on 'ESC' key press
-                int key = HighGui.waitKey(1); // Wait for 1ms for a key press
-                if (key == 27) { // 27 is the ASCII code for ESC
-                    System.out.println("ESC key pressed. Exiting...");
-                    break;
+        frame.addKeyListener(new KeyAdapter() {
+            @Override
+            public void keyPressed(KeyEvent e) {
+                if (e.getKeyCode() == KeyEvent.VK_ESCAPE) {
+                    running.set(false);
+                } else if (e.getKeyCode() == KeyEvent.VK_C) {
+                    capturedFrame = new Mat();
+                    if (capture.read(capturedFrame)) {
+                        processCapturedFrame(capturedFrame);
+                    } else {
+                        System.err.println("Failed to capture frame.");
+                    }
                 }
-            } else {
-                System.out.println("Error: Cannot read the frame!");
-                break;
             }
+        });
+
+        // Background thread for capturing and displaying video frames
+        SwingWorker<Void, BufferedImage> worker = new SwingWorker<>() {
+            @Override
+            protected Void doInBackground() {
+                Mat mat = new Mat();
+                while (running.get()) {
+                    if (!capture.read(mat)) {
+                        System.err.println("Cannot read frame");
+                        break;
+                    }
+                    BufferedImage image = matToBufferedImage(mat);
+                    if (image != null) {
+                        publish(image);
+                    }
+                }
+                return null;
+            }
+
+            @Override
+            protected void process(java.util.List<BufferedImage> chunks) {
+                // Update the JLabel with the latest frame
+                BufferedImage image = chunks.get(chunks.size() - 1);
+                label.setIcon(new ImageIcon(image));
+            }
+
+            @Override
+            protected void done() {
+                capture.release();
+                frame.dispose();
+            }
+        };
+
+        worker.execute();
+    }
+
+    private void processCapturedFrame(Mat mat) {
+        BufferedImage image = matToBufferedImage(mat);
+        File outputfile = new File("src\\ocr\\captured_frame.png");
+        try {
+            javax.imageio.ImageIO.write(image, "png", outputfile);
+            System.out.println("Frame saved as: " + outputfile.getAbsolutePath());
+        } catch (Exception e) {
+            e.printStackTrace();
         }
+    }
 
-        // Release resources
-        capture.release();
-        HighGui.destroyAllWindows();
-        System.exit(0); // Ensure the program exits completely
+    private BufferedImage matToBufferedImage(Mat mat) {
+        MatOfByte matOfByte = new MatOfByte();
+        Imgcodecs.imencode(".jpg", mat, matOfByte);
+        byte[] byteArray = matOfByte.toArray();
+        try (InputStream in = new ByteArrayInputStream(byteArray)) {
+            return javax.imageio.ImageIO.read(in);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
 
-        System.out.println("ESC key pressed. Exiting...");
+    public static void main(String[] args) {
+        new OCRReader().startScan();
     }
 }
