@@ -19,9 +19,13 @@ import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.image.BufferedImage;
+import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.util.UUID;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class OCRReader2 {
@@ -33,6 +37,8 @@ public class OCRReader2 {
 
     private final AtomicBoolean running;
     private Mat capturedFrame;
+    private UUID productIDRead;
+    protected boolean hasScanned = false;
 
     public OCRReader2() {
         running = new AtomicBoolean(true); // Initialize to true
@@ -43,7 +49,7 @@ public class OCRReader2 {
         if (!capture.isOpened()) {
             System.err.println("Cannot open camera");
             JOptionPane.showMessageDialog(null, "Scanning Error: Unable to open the camera.", "Error", JOptionPane.ERROR_MESSAGE);
-
+//            latch.countDown();
             return;
         }
 
@@ -65,6 +71,8 @@ public class OCRReader2 {
                     capturedFrame = new Mat();
                     if (capture.read(capturedFrame)) {
                         processCapturedFrame(capturedFrame);
+                        performOCR();
+                        hasScanned = true;
                     } else {
                         System.err.println("Failed to capture frame.");
                     }
@@ -79,6 +87,7 @@ public class OCRReader2 {
                 if (capture.isOpened()) {
                     capture.release();
                 }
+//                latch.countDown();
             }
         });
 
@@ -112,11 +121,107 @@ public class OCRReader2 {
                 capture.release();
                 frame.dispose();
                 running.set(false);
+//                latch.countDown();
             }
         };
 
         worker.execute();
     }
+    
+    
+//    public UUID performOCR() {
+//
+//        try {
+//
+//            ProcessBuilder pb = new ProcessBuilder("cmd.exe", "/c", "src\\ocr\\run_ocr.bat");
+//
+//            pb.redirectErrorStream(true); // Merge standard error with output
+//
+//            // Start the process
+//            Process process = pb.start();
+//
+//            // Capture the output
+//            BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+//            String line;
+//
+//            String productIDRead = "Product ID not found";
+//            while ((line = reader.readLine()) != null) {
+//                if (line.contains("Code pattern found:")) {
+//                    productIDRead = line.replace("Code pattern found:", "").trim();
+//
+//                }
+//            }
+//
+//            System.out.println("Python Output: " + productIDRead);
+//
+//            // Wait for the process to complete
+//            int exitCode = process.waitFor();
+//            if (exitCode == 0) {
+//                System.out.println("Python script executed successfully.");
+//            } else {
+//                System.err.println("Python script execution failed with exit code: " + exitCode);
+//            }
+//            
+//            
+//            return UUID.fromString(productIDRead);
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//
+////            return "Error during OCR: " + e.getMessage();
+//            return UUID.fromString("00000000-0000-0000-0000-000000000000");
+//
+//        }
+//    }
+    
+    public void performOCR() {
+
+        try {
+
+            ProcessBuilder pb = new ProcessBuilder("cmd.exe", "/c", "src\\ocr\\run_ocr.bat");
+
+            pb.redirectErrorStream(true); // Merge standard error with output
+
+            // Start the process
+            Process process = pb.start();
+
+            // Capture the output
+            BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+            String line;
+
+            String productIDReadString = "Product ID not found";
+            while ((line = reader.readLine()) != null) {
+                if (line.contains("Code pattern found:")) {
+                    productIDReadString = line.replace("Code pattern found:", "").trim();
+
+                }
+            }
+
+            System.out.println("Python Output: " + productIDReadString);
+
+            // Wait for the process to complete
+            int exitCode = process.waitFor();
+            if (exitCode == 0) {
+                System.out.println("Python script executed successfully.");
+            } else {
+                System.err.println("Python script execution failed with exit code: " + exitCode);
+            }
+            
+            
+            this.productIDRead = UUID.fromString(productIDReadString);
+        } catch (Exception e) {
+            e.printStackTrace();
+
+//            return "Error during OCR: " + e.getMessage();
+            this.productIDRead = UUID.fromString("00000000-0000-0000-0000-000000000000");
+
+        }
+    }
+    
+    public UUID getProductIDRead()
+    {
+        return  productIDRead;
+    }
+            
 
     private void processCapturedFrame(Mat mat) {
         BufferedImage image = matToBufferedImage(mat);
