@@ -25,8 +25,10 @@ import java.io.File;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.UUID;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
+
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 
 public class OCRReader2 {
 
@@ -38,10 +40,16 @@ public class OCRReader2 {
     private final AtomicBoolean running;
     private Mat capturedFrame;
     private UUID productIDRead;
-    protected boolean hasScanned = false;
+    public boolean hasScanned = false;
+    
+    private final BlockingQueue<UUID> productQueue;
+
 
     public OCRReader2() {
         running = new AtomicBoolean(true); // Initialize to true
+        
+        productQueue = new LinkedBlockingQueue<>(); // Thread-safe queue
+
     }
 
     public void startScan() {
@@ -49,7 +57,6 @@ public class OCRReader2 {
         if (!capture.isOpened()) {
             System.err.println("Cannot open camera");
             JOptionPane.showMessageDialog(null, "Scanning Error: Unable to open the camera.", "Error", JOptionPane.ERROR_MESSAGE);
-//            latch.countDown();
             return;
         }
 
@@ -87,7 +94,6 @@ public class OCRReader2 {
                 if (capture.isOpened()) {
                     capture.release();
                 }
-//                latch.countDown();
             }
         });
 
@@ -121,7 +127,6 @@ public class OCRReader2 {
                 capture.release();
                 frame.dispose();
                 running.set(false);
-//                latch.countDown();
             }
         };
 
@@ -188,7 +193,9 @@ public class OCRReader2 {
             BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
             String line;
 
-            String productIDReadString = "Product ID not found";
+//            String productIDReadString = "Product ID not found";
+            String productIDReadString = "00000000-0000-0000-0000-000000000000";
+
             while ((line = reader.readLine()) != null) {
                 if (line.contains("Code pattern found:")) {
                     productIDReadString = line.replace("Code pattern found:", "").trim();
@@ -207,19 +214,21 @@ public class OCRReader2 {
             }
             
             
-            this.productIDRead = UUID.fromString(productIDReadString);
+//            this.productIDRead = UUID.fromString(productIDReadString);
+            UUID productId = UUID.fromString(productIDReadString);
+            productQueue.put(productId);
         } catch (Exception e) {
             e.printStackTrace();
 
 //            return "Error during OCR: " + e.getMessage();
-            this.productIDRead = UUID.fromString("00000000-0000-0000-0000-000000000000");
+//            this.productIDRead = UUID.fromString("00000000-0000-0000-0000-000000000000");
 
         }
     }
     
-    public UUID getProductIDRead()
+    public UUID getNextProductID() throws InterruptedException
     {
-        return  productIDRead;
+        return  productQueue.take();
     }
             
 

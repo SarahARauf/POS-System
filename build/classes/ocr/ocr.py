@@ -18,7 +18,7 @@ def ocr_run(img_path):
     ocr = PaddleOCR(use_angle_cls=True, lang='en') # need to run only once to download and load model into memory
     # img_path = 'C:\\Users\\Sarah\\Desktop\\Uni\\POS system\\POSSystem\\captured_frame.png'
     result = ocr.ocr(img_path, cls=True)
-    # print(result)
+    #print(result)
     # print("---")
 
     for idx in range(len(result)):
@@ -26,7 +26,9 @@ def ocr_run(img_path):
         for line in res:
             # print("-")
             # print(line[1][0])
-            pattern_match = re.match(r'^\d{8}(-\d{4}){2}$', line[1][0])
+            # pattern_match = re.match(r'^\d{8}(-\d{4}){2}$', line[1][0])
+            pattern_match = re.match(r'^\d{8}(-\d{4}){3}-[a-z]{12}$', line[1][0])
+
             if pattern_match:
                 return line[1][0]
             

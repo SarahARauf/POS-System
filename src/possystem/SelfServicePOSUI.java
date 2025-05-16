@@ -15,7 +15,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.UUID;
-import java.awt.event.ActionEvent;  
+import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseEvent;
@@ -82,13 +82,12 @@ public class SelfServicePOSUI {
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setSize(800, 600);
         frame.setLayout(new BorderLayout());
-        
+
 //        // Camera panel for OCRReader
 //        cameraPanel = new JPanel();
 //        cameraPanel.setPreferredSize(new Dimension(320, 240));
 //
 //        frame.add(cameraPanel, BorderLayout.WEST);
-
         // Product display area
         productDisplayArea = new JPanel();
         productDisplayArea.setLayout(new GridLayout(0, 3, 10, 10));
@@ -113,7 +112,6 @@ public class SelfServicePOSUI {
         cartScrollPane.setPreferredSize(new Dimension(200, frame.getHeight())); // Adjust the width as needed
         frame.add(cartScrollPane, BorderLayout.EAST);
 
-
         // Total amount field
         JPanel bottomPanel = new JPanel();
         bottomPanel.setLayout(new FlowLayout(FlowLayout.LEFT));
@@ -130,12 +128,11 @@ public class SelfServicePOSUI {
 //        quantityTextField = new JTextField("Loyalty ID", 10);
 //        quantityTextField.setEditable(true);
 //        bottomPanel.add(quantityTextField);
-
         // Leave this here, will implement once I have figured out how to use computer vision for scanning
         scanItemButton = new JButton("Scan Item");
         bottomPanel.add(scanItemButton);
         scanItemButton.addActionListener(new ScanItemListener());
-        
+
         bottomPanel.add(new JLabel("Total Amount:"));
         totalAmountField = new JTextField(10);
         totalAmountField.setEditable(false);
@@ -177,16 +174,14 @@ public class SelfServicePOSUI {
             // Add action listener to handle button clicks (adding the items)
             productButton.addActionListener(e -> {
                 selectedProductId = (UUID) productButton.getClientProperty("productId");
-                controller.addItem(selectedProductId,1);
+                controller.addItem(selectedProductId, 1);
                 JOptionPane.showMessageDialog(frame, "Selected Product ID: " + selectedProductId, "Product Selected", JOptionPane.INFORMATION_MESSAGE);
             });
 
             productDisplayArea.add(productButton);
         }
-        
-        
-    }
 
+    }
 
     // Display the current cart called in POSController
     public void showCart(Sale sale) {
@@ -198,10 +193,8 @@ public class SelfServicePOSUI {
         }
         sale.calculateTotal();
         cartDisplayArea.setModel(cartListModel);
-        totalAmountField.setText("$" + sale.getTotalAmount().toString()); 
+        totalAmountField.setText("$" + sale.getTotalAmount().toString());
     }
-    
-    
 
     // Prompt for payment information called in PosController
     public PaymentDetails promptPayment() {
@@ -221,7 +214,6 @@ public class SelfServicePOSUI {
         paymentPanel.add(cvvField);
         paymentPanel.add(new JLabel("Loyalty Member No:"));
         paymentPanel.add(loyaltyMemberField);
-        
 
         int result = JOptionPane.showConfirmDialog(
                 frame,
@@ -234,16 +226,14 @@ public class SelfServicePOSUI {
         //If user presses OK, then create a new PaymentDetail Object
         if (result == JOptionPane.OK_OPTION) {
 
-            if (!loyaltyMemberField.getText().isBlank()){
+            if (!loyaltyMemberField.getText().isBlank()) {
                 controller.applyLoyaltyDiscount(UUID.fromString(loyaltyMemberField.getText()));
             }
-            
+
             //Clear cart after purchasing
-            
 //            cartDisplayArea.repaint();
 //            cartDisplayArea.revalidate();
 //            cartDisplayArea.
-            
             return new PaymentDetails(
                     cardNumberField.getText(),
                     expiryDateField.getText(),
@@ -311,7 +301,6 @@ public class SelfServicePOSUI {
 //        }
 //        return null; // No valid selection
 //    }
-
 //    private class AddToCartListener implements ActionListener {
 //
 //        @Override
@@ -326,81 +315,96 @@ public class SelfServicePOSUI {
 //
 //        }
 //    }
-    
-    private class ScanItemListener implements ActionListener {
-        @Override
-        public void actionPerformed(ActionEvent e){
-            try{
-//                CountDownLatch latch = new CountDownLatch(1);
-                ocrReader = new OCRReader2();
-//                ocrReader.startScan();
-
-                ocrReader.startScan();
-//                latch.await();
-                System.out.println(String.valueOf(ocrReader.hasScanned));
-
-                while(ocrReader.hasScanned==true)
-                {
-                    System.out.println("Hellooo");
-                    UUID selectedProductId = ocrReader.getProductIDRead();
-                    controller.addItem(selectedProductId,1);
-                    
-                    JOptionPane.showMessageDialog(frame, "Selected Product ID: " + selectedProductId, "Product Selected", JOptionPane.INFORMATION_MESSAGE);
-
-                }
-
-
-//                UUID selectedProductId = ocrReader.performOCR();
-// need to check to make sure selectedProductID is valid before adding:
-//                if (selectedProductId)
-                
-                
-            } catch(Exception ex) {
-                
-                System.out.println(ex);
-   
-                JOptionPane.showMessageDialog(frame, "Scanning Error", "Error", JOptionPane.ERROR_MESSAGE);
-
-            }
-        }
-    }
-    
 //    private class ScanItemListener implements ActionListener {
-//    @Override
-//    public void actionPerformed(ActionEvent e) {
-//        CountDownLatch latch = new CountDownLatch(1);
-//
-//        // Run startScan on a separate thread
-//        new Thread(() -> {
-//            try {
+//        @Override
+//        public void actionPerformed(ActionEvent e){
+//            try{
+////                CountDownLatch latch = new CountDownLatch(1);
 //                ocrReader = new OCRReader2();
-//                ocrReader.startScan(latch);
+//                ocrReader.startScan();
+//                new Thread(ocrReader::startScan).start(); // Run scanner in a separate thread
 //
-//                // Wait for the JFrame to close
-//                latch.await();
+////                ocrReader.startScan();
+////                latch.await();
+//                System.out.println(String.valueOf(ocrReader.hasScanned));
 //
-//                // After JFrame is closed, perform OCR and add item
-//                SwingUtilities.invokeLater(() -> {
-//                    try {
-//                        UUID selectedProductId = ocrReader.performOCR();
-//                        if (selectedProductId != null) {
-//                            controller.addItem(selectedProductId, 1);
-//                            JOptionPane.showMessageDialog(frame, "Selected Product ID: " + selectedProductId, "Product Selected", JOptionPane.INFORMATION_MESSAGE);
-//                        } else {
-//                            JOptionPane.showMessageDialog(frame, "No valid product selected.", "Info", JOptionPane.INFORMATION_MESSAGE);
-//                        }
-//                    } catch (Exception ex) {
-////                        JOptionPane.showMessageDialog(frame, "Scanning Error", "Error", JOptionPane.ERROR_MESSAGE);
-//                    }
-//                });
-//            } catch (InterruptedException ex) {
-//                Thread.currentThread().interrupt();
-//                JOptionPane.showMessageDialog(frame, "Scanning interrupted.", "Error", JOptionPane.ERROR_MESSAGE);
+//                while(ocrReader.hasScanned==true)
+//                {
+//                    System.out.println("Hellooo");
+//                    UUID selectedProductId = ocrReader.getProductIDRead();
+//                    controller.addItem(selectedProductId,1);
+//                    
+//                    JOptionPane.showMessageDialog(frame, "Selected Product ID: " + selectedProductId, "Product Selected", JOptionPane.INFORMATION_MESSAGE);
+//
+//                }
+//
+//
+////                UUID selectedProductId = ocrReader.performOCR();
+//// need to check to make sure selectedProductID is valid before adding:
+////                if (selectedProductId)
+//                
+//                
+//            } catch(Exception ex) {
+//                
+//                System.out.println(ex);
+//   
+//                JOptionPane.showMessageDialog(frame, "Scanning Error", "Error", JOptionPane.ERROR_MESSAGE);
+//
 //            }
-//        }).start();
+//        }
 //    }
-//}
+//    private class ScanItemListener implements ActionListener {
+//
+//        @Override
+//        public void actionPerformed(ActionEvent e) {
+//            try {
+//                SwingUtilities.invokeLater(() -> {
+//                    OCRReader2 ocrReader = new OCRReader2();
+//                    ocrReader.startScan();
+//                });
+//
+//                while (true) {
+//                    UUID selectedProductId = ocrReader.getNextProductID(); // Blocks until a product ID is available
+//                    controller.addItem(selectedProductId, 1);
+//                    JOptionPane.showMessageDialog(frame, "Selected Product ID: " + selectedProductId, "Product Selected", JOptionPane.INFORMATION_MESSAGE);
+//                }
+//            } catch (InterruptedException ex) {
+//                System.err.println("Error retrieving product ID: " + ex.getMessage());
+//            } catch (Exception ex) {
+//                System.out.println(ex);
+//                JOptionPane.showMessageDialog(frame, "Scanning Error", "Error", JOptionPane.ERROR_MESSAGE);
+//            }
+//        }
+//    }
 
+    private class ScanItemListener implements ActionListener {
+
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        SwingUtilities.invokeLater(() -> {
+            OCRReader2 ocrReader = new OCRReader2();
+            ocrReader.startScan();
+
+            // Background thread to retrieve product IDs
+            new Thread(() -> {
+                try {
+                    while (true) {
+                        UUID selectedProductId = ocrReader.getNextProductID(); // Blocks until a product ID is available
+                        // Update UI on EDT
+                        SwingUtilities.invokeLater(() -> {
+                            controller.addItem(selectedProductId, 1);
+                            JOptionPane.showMessageDialog(frame, "Selected Product ID: " + selectedProductId, "Product Selected", JOptionPane.INFORMATION_MESSAGE);
+                        });
+                    }
+                } catch (InterruptedException ex) {
+                    System.err.println("Error retrieving product ID: " + ex.getMessage());
+                } catch (Exception ex) {
+                    SwingUtilities.invokeLater(() -> JOptionPane.showMessageDialog(frame, "Scanning Error", "Error", JOptionPane.ERROR_MESSAGE));
+                }
+            }).start();
+        });
+    }
+}
 
     private class RemoveFromCartListener implements ActionListener {
 
@@ -415,10 +419,11 @@ public class SelfServicePOSUI {
             }
         }
     }
-    
+
     private class CheckOutListener implements ActionListener {
+
         @Override
-        public void actionPerformed(ActionEvent e){
+        public void actionPerformed(ActionEvent e) {
             controller.processPayment();
         }
     }
